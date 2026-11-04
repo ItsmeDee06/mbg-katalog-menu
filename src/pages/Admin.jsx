@@ -30,7 +30,7 @@ export default function Admin() {
         sppg_name: data.sppg_name,
         menu_date: data.menu_date,
         besar_image: data.besar_image,
-        besar_items: data.besar_items.join('\n'), // Gabungkan array jadi string per baris
+        besar_items: data.besar_items.join('\n'),
         kecil_image: data.kecil_image,
         kecil_items: data.kecil_items.join('\n')
       });
@@ -45,29 +45,54 @@ export default function Admin() {
     setLoading(false);
   };
 
+  // Fungsi Otomatisasi Ekstrak dan Konversi URL Google Drive
+  const convertDriveUrl = (url) => {
+    if (!url) return url;
+    // Regex untuk mendeteksi link share Google Drive dan mengambil ID file-nya
+    const match = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([a-zA-Z0-9_-]{25,})/);
+    
+    if (match && match[1]) {
+      // Mengubah menjadi format lh3 (Direct Image Link)
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
+    }
+    return url; // Jika bukan URL Drive (misal Unsplash), biarkan seperti aslinya
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('Menyimpan pembaruan...');
     
-    // Ubah string multiline kembali menjadi array JSON
     const besarItemsArray = formData.besar_items.split('\n').filter(item => item.trim() !== '');
     const kecilItemsArray = formData.kecil_items.split('\n').filter(item => item.trim() !== '');
+
+    // Eksekusi otomatisasi konversi gambar saat tombol Simpan ditekan
+    const finalBesarImage = convertDriveUrl(formData.besar_image);
+    const finalKecilImage = convertDriveUrl(formData.kecil_image);
 
     const { error } = await supabase
       .from('mbg_menu')
       .update({
         sppg_name: formData.sppg_name,
         menu_date: formData.menu_date,
-        besar_image: formData.besar_image,
+        besar_image: finalBesarImage,
         besar_items: besarItemsArray,
-        kecil_image: formData.kecil_image,
+        kecil_image: finalKecilImage,
         kecil_items: kecilItemsArray
       })
       .eq('id', 1);
 
-    if (error) setMessage(`Gagal: ${error.message}`);
-    else setMessage('Menu berhasil diperbarui!');
+    if (error) {
+      setMessage(`Gagal: ${error.message}`);
+    } else {
+      setMessage('Menu berhasil diperbarui!');
+      // Perbarui tampilan form agar langsung menampilkan URL hasil konversi
+      setFormData(prev => ({
+        ...prev,
+        besar_image: finalBesarImage,
+        kecil_image: finalKecilImage
+      }));
+    }
     setLoading(false);
   };
 
@@ -93,7 +118,7 @@ export default function Admin() {
           <button onClick={() => supabase.auth.signOut()} className="text-red-600 font-medium">Logout</button>
         </div>
         
-        {message && <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg">{message}</div>}
+        {message && <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg font-medium">{message}</div>}
 
         <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="col-span-1 md:col-span-2 flex gap-4">
@@ -109,24 +134,24 @@ export default function Admin() {
 
           <div className="bg-gray-50 p-4 rounded-lg border">
             <h3 className="font-bold mb-4 text-green-700">Porsi Besar</h3>
-            <label className="block text-sm font-semibold mb-1">URL Gambar</label>
-            <input type="text" className="w-full border p-2 rounded mb-4" value={formData.besar_image} onChange={e => setFormData({...formData, besar_image: e.target.value})} />
+            <label className="block text-sm font-semibold mb-1">URL Gambar (Bisa paste link Google Drive)</label>
+            <input type="text" className="w-full border p-2 rounded mb-4 focus:ring focus:ring-green-200" value={formData.besar_image} onChange={e => setFormData({...formData, besar_image: e.target.value})} />
             
             <label className="block text-sm font-semibold mb-1">Daftar Menu (Pisahkan dengan Enter)</label>
-            <textarea rows="6" className="w-full border p-2 rounded" value={formData.besar_items} onChange={e => setFormData({...formData, besar_items: e.target.value})} />
+            <textarea rows="6" className="w-full border p-2 rounded focus:ring focus:ring-green-200" value={formData.besar_items} onChange={e => setFormData({...formData, besar_items: e.target.value})} />
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg border">
             <h3 className="font-bold mb-4 text-green-700">Porsi Kecil</h3>
-            <label className="block text-sm font-semibold mb-1">URL Gambar</label>
-            <input type="text" className="w-full border p-2 rounded mb-4" value={formData.kecil_image} onChange={e => setFormData({...formData, kecil_image: e.target.value})} />
+            <label className="block text-sm font-semibold mb-1">URL Gambar (Bisa paste link Google Drive)</label>
+            <input type="text" className="w-full border p-2 rounded mb-4 focus:ring focus:ring-green-200" value={formData.kecil_image} onChange={e => setFormData({...formData, kecil_image: e.target.value})} />
             
             <label className="block text-sm font-semibold mb-1">Daftar Menu (Pisahkan dengan Enter)</label>
-            <textarea rows="6" className="w-full border p-2 rounded" value={formData.kecil_items} onChange={e => setFormData({...formData, kecil_items: e.target.value})} />
+            <textarea rows="6" className="w-full border p-2 rounded focus:ring focus:ring-green-200" value={formData.kecil_items} onChange={e => setFormData({...formData, kecil_items: e.target.value})} />
           </div>
 
           <div className="col-span-1 md:col-span-2">
-            <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">
+            <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition shadow-md">
               {loading ? 'Menyimpan...' : 'Simpan Pembaruan Menu'}
             </button>
           </div>
