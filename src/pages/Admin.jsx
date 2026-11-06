@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+// KOMPONEN HELPER DIPINDAHKAN KE LUAR AGAR TIDAK HILANG FOKUS SAAT MENGETIK
+const InputField = ({ label, name, value, onChange, placeholder = "" }) => (
+  <div className="mb-3">
+    <label className="block text-xs font-semibold mb-1 text-gray-600">{label}</label>
+    <input 
+      type="text" 
+      name={name} 
+      value={value || ''} 
+      onChange={onChange} 
+      placeholder={placeholder} 
+      className="w-full border p-2 rounded bg-white text-sm focus:ring focus:ring-green-200" 
+    />
+  </div>
+);
+
 export default function Admin() {
   const [session, setSession] = useState(null);
   const [email, setEmail] = useState('');
@@ -8,10 +23,12 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   
-  // Form State
   const [formData, setFormData] = useState({
-    sppg_name: '', menu_date: '', besar_image: '', 
-    besar_items: '', kecil_image: '', kecil_items: ''
+    sppg_name: '', menu_date: '', 
+    besar_nama: '', besar_image: '', besar_items: '',
+    besar_energi: '', besar_protein: '', besar_lemak: '', besar_karbohidrat: '', besar_serat: '',
+    kecil_nama: '', kecil_image: '', kecil_items: '',
+    kecil_energi: '', kecil_protein: '', kecil_lemak: '', kecil_karbohidrat: '', kecil_serat: ''
   });
 
   useEffect(() => {
@@ -27,12 +44,11 @@ export default function Admin() {
     const { data, error } = await supabase.from('mbg_menu').select('*').eq('id', 1).single();
     if (data) {
       setFormData({
-        sppg_name: data.sppg_name,
-        menu_date: data.menu_date,
-        besar_image: data.besar_image,
-        besar_items: data.besar_items.join('\n'),
-        kecil_image: data.kecil_image,
-        kecil_items: data.kecil_items.join('\n')
+        sppg_name: data.sppg_name || '', menu_date: data.menu_date || '',
+        besar_nama: data.besar_nama || '', besar_image: data.besar_image || '', besar_items: data.besar_items ? data.besar_items.join('\n') : '',
+        besar_energi: data.besar_energi || '', besar_protein: data.besar_protein || '', besar_lemak: data.besar_lemak || '', besar_karbohidrat: data.besar_karbohidrat || '', besar_serat: data.besar_serat || '',
+        kecil_nama: data.kecil_nama || '', kecil_image: data.kecil_image || '', kecil_items: data.kecil_items ? data.kecil_items.join('\n') : '',
+        kecil_energi: data.kecil_energi || '', kecil_protein: data.kecil_protein || '', kecil_lemak: data.kecil_lemak || '', kecil_karbohidrat: data.kecil_karbohidrat || '', kecil_serat: data.kecil_serat || ''
       });
     }
   };
@@ -45,17 +61,15 @@ export default function Admin() {
     setLoading(false);
   };
 
-  // Fungsi Otomatisasi Ekstrak dan Konversi URL Google Drive
   const convertDriveUrl = (url) => {
     if (!url) return url;
-    // Regex untuk mendeteksi link share Google Drive dan mengambil ID file-nya
     const match = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([a-zA-Z0-9_-]{25,})/);
-    
-    if (match && match[1]) {
-      // Mengubah menjadi format lh3 (Direct Image Link)
-      return `https://lh3.googleusercontent.com/d/${match[1]}`;
-    }
-    return url; // Jika bukan URL Drive (misal Unsplash), biarkan seperti aslinya
+    return match && match[1] ? `https://lh3.googleusercontent.com/d/${match[1]}` : url;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleUpdate = async (e) => {
@@ -65,16 +79,13 @@ export default function Admin() {
     
     const besarItemsArray = formData.besar_items.split('\n').filter(item => item.trim() !== '');
     const kecilItemsArray = formData.kecil_items.split('\n').filter(item => item.trim() !== '');
-
-    // Eksekusi otomatisasi konversi gambar saat tombol Simpan ditekan
     const finalBesarImage = convertDriveUrl(formData.besar_image);
     const finalKecilImage = convertDriveUrl(formData.kecil_image);
 
     const { error } = await supabase
       .from('mbg_menu')
       .update({
-        sppg_name: formData.sppg_name,
-        menu_date: formData.menu_date,
+        ...formData, 
         besar_image: finalBesarImage,
         besar_items: besarItemsArray,
         kecil_image: finalKecilImage,
@@ -82,17 +93,9 @@ export default function Admin() {
       })
       .eq('id', 1);
 
-    if (error) {
-      setMessage(`Gagal: ${error.message}`);
-    } else {
-      setMessage('Menu berhasil diperbarui!');
-      // Perbarui tampilan form agar langsung menampilkan URL hasil konversi
-      setFormData(prev => ({
-        ...prev,
-        besar_image: finalBesarImage,
-        kecil_image: finalKecilImage
-      }));
-    }
+    if (error) setMessage(`Gagal: ${error.message}`);
+    else setMessage('Menu berhasil diperbarui!');
+    
     setLoading(false);
   };
 
@@ -111,48 +114,63 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-8">
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-8">
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h1 className="text-2xl font-bold text-gray-800">Dashboard Admin MBG</h1>
           <button onClick={() => supabase.auth.signOut()} className="text-red-600 font-medium">Logout</button>
         </div>
         
-        {message && <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg font-medium">{message}</div>}
+        {message && <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-lg font-medium border border-green-200">{message}</div>}
 
-        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="col-span-1 md:col-span-2 flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-semibold mb-1">Nama SPPG</label>
-              <input type="text" className="w-full border p-2 rounded" value={formData.sppg_name} onChange={e => setFormData({...formData, sppg_name: e.target.value})} />
+        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Header Info */}
+          <div className="col-span-1 md:col-span-2 flex gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="flex-1"><InputField label="Nama SPPG" name="sppg_name" value={formData.sppg_name} onChange={handleChange} /></div>
+            <div className="flex-1"><InputField label="Tanggal Berlaku" name="menu_date" value={formData.menu_date} onChange={handleChange} /></div>
+          </div>
+
+          {/* Form Porsi Kecil (KIRI) */}
+          <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
+            <h3 className="font-bold mb-4 text-blue-700 text-lg border-b border-blue-200 pb-2">🍱 PORSI KECIL (PAUD - SD)</h3>
+            <InputField label="Nama Menu Porsi Kecil" name="kecil_nama" value={formData.kecil_nama} onChange={handleChange} placeholder="Contoh: Menu Andalan Anak" />
+            <InputField label="URL Gambar (Google Drive/Unsplash)" name="kecil_image" value={formData.kecil_image} onChange={handleChange} />
+            <div className="mb-4">
+              <label className="block text-xs font-semibold mb-1 text-gray-600">Daftar Lauk (Pisahkan dengan Enter)</label>
+              <textarea rows="4" name="kecil_items" value={formData.kecil_items} onChange={handleChange} className="w-full border p-2 rounded bg-white text-sm focus:ring focus:ring-blue-200" />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm font-semibold mb-1">Tanggal Berlaku</label>
-              <input type="text" className="w-full border p-2 rounded" value={formData.menu_date} onChange={e => setFormData({...formData, menu_date: e.target.value})} />
+            <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-lg border border-gray-200">
+              <InputField label="Total Energi (Contoh: 612)" name="kecil_energi" value={formData.kecil_energi} onChange={handleChange} />
+              <InputField label="Protein (Contoh: 19.9g)" name="kecil_protein" value={formData.kecil_protein} onChange={handleChange} />
+              <InputField label="Lemak (Contoh: 23.6g)" name="kecil_lemak" value={formData.kecil_lemak} onChange={handleChange} />
+              <InputField label="Karbohidrat (Contoh: 77.1g)" name="kecil_karbohidrat" value={formData.kecil_karbohidrat} onChange={handleChange} />
+              <div className="col-span-2"><InputField label="Serat (Contoh: 2.3g)" name="kecil_serat" value={formData.kecil_serat} onChange={handleChange} /></div>
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <h3 className="font-bold mb-4 text-green-700">Porsi Besar</h3>
-            <label className="block text-sm font-semibold mb-1">URL Gambar (Bisa paste link Google Drive)</label>
-            <input type="text" className="w-full border p-2 rounded mb-4 focus:ring focus:ring-green-200" value={formData.besar_image} onChange={e => setFormData({...formData, besar_image: e.target.value})} />
-            
-            <label className="block text-sm font-semibold mb-1">Daftar Menu (Pisahkan dengan Enter)</label>
-            <textarea rows="6" className="w-full border p-2 rounded focus:ring focus:ring-green-200" value={formData.besar_items} onChange={e => setFormData({...formData, besar_items: e.target.value})} />
+          {/* Form Porsi Besar (KANAN) */}
+          <div className="bg-orange-50/50 p-5 rounded-xl border border-orange-100">
+            <h3 className="font-bold mb-4 text-orange-700 text-lg border-b border-orange-200 pb-2">🍱 PORSI BESAR (SMP - SMK)</h3>
+            <InputField label="Nama Menu Porsi Besar" name="besar_nama" value={formData.besar_nama} onChange={handleChange} placeholder="Contoh: Menu Lengkap Remaja" />
+            <InputField label="URL Gambar (Google Drive/Unsplash)" name="besar_image" value={formData.besar_image} onChange={handleChange} />
+            <div className="mb-4">
+              <label className="block text-xs font-semibold mb-1 text-gray-600">Daftar Lauk (Pisahkan dengan Enter)</label>
+              <textarea rows="4" name="besar_items" value={formData.besar_items} onChange={handleChange} className="w-full border p-2 rounded bg-white text-sm focus:ring focus:ring-orange-200" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-lg border border-gray-200">
+              <InputField label="Total Energi (Contoh: 750)" name="besar_energi" value={formData.besar_energi} onChange={handleChange} />
+              <InputField label="Protein (Contoh: 25.0g)" name="besar_protein" value={formData.besar_protein} onChange={handleChange} />
+              <InputField label="Lemak (Contoh: 30.0g)" name="besar_lemak" value={formData.besar_lemak} onChange={handleChange} />
+              <InputField label="Karbohidrat (Contoh: 85.0g)" name="besar_karbohidrat" value={formData.besar_karbohidrat} onChange={handleChange} />
+              <div className="col-span-2"><InputField label="Serat (Contoh: 3.0g)" name="besar_serat" value={formData.besar_serat} onChange={handleChange} /></div>
+            </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <h3 className="font-bold mb-4 text-green-700">Porsi Kecil</h3>
-            <label className="block text-sm font-semibold mb-1">URL Gambar (Bisa paste link Google Drive)</label>
-            <input type="text" className="w-full border p-2 rounded mb-4 focus:ring focus:ring-green-200" value={formData.kecil_image} onChange={e => setFormData({...formData, kecil_image: e.target.value})} />
-            
-            <label className="block text-sm font-semibold mb-1">Daftar Menu (Pisahkan dengan Enter)</label>
-            <textarea rows="6" className="w-full border p-2 rounded focus:ring focus:ring-green-200" value={formData.kecil_items} onChange={e => setFormData({...formData, kecil_items: e.target.value})} />
-          </div>
-
-          <div className="col-span-1 md:col-span-2">
-            <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition shadow-md">
-              {loading ? 'Menyimpan...' : 'Simpan Pembaruan Menu'}
+          {/* Tombol Simpan */}
+          <div className="col-span-1 md:col-span-2 mt-4">
+            <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition shadow-lg text-lg">
+              {loading ? 'Menyimpan ke Database...' : 'SIMPAN PEMBARUAN MENU SEKARANG'}
             </button>
           </div>
         </form>

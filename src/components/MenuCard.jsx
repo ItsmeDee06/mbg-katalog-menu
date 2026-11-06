@@ -1,79 +1,79 @@
 import React from 'react';
-
-// Ikon Lucide (Menu, Bell, Home, dll) sudah dihapus dari import karena tidak digunakan lagi
+import { Clock } from 'lucide-react'; 
 
 export default function MenuCard({ data, isKecil }) {
-  const bgCard = isKecil ? 'bg-[#E1E5DF]' : 'bg-[#DCD7CD]'; 
+  const bgCard = isKecil 
+    ? 'bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0]' 
+    : 'bg-gradient-to-br from-[#fdfbf7] to-[#e7e1d5]'; 
+
+  const namaPorsi = isKecil ? 'Porsi Kecil' : 'Porsi Besar';
 
   return (
-    // PERUBAHAN: Tinggi (h) disesuaikan dari 820px menjadi 680px karena elemen atas & bawah dihapus
-    <div className={`relative w-full max-w-[480px] mx-auto ${bgCard} rounded-[40px] shadow-2xl h-[680px] font-sans border border-white/50`}>
+    <div className={`relative w-full max-w-[420px] mx-auto ${bgCard} rounded-[40px] shadow-2xl p-7 font-sans overflow-hidden border border-white/60 flex flex-col h-[690px] transition-transform duration-300 hover:-translate-y-1`}>
       
-      {/* Ornamen daun kecil melayang */}
-      <div className="absolute top-8 right-20 w-3 h-3 bg-green-500 rounded-full rounded-tr-none rotate-45 blur-[1px] opacity-80 z-10"></div>
-      <div className="absolute top-24 left-48 w-4 h-4 bg-green-600 rounded-full rounded-tr-none rotate-12 blur-[1px] opacity-80 z-10"></div>
-
-      {/* 1. LINGKARAN MERAH: Judul Utama (Posisinya dinaikkan ke top-12) */}
-      <div className="absolute top-12 left-10 pr-8 z-20 w-[90%]">
-        <h2 className="text-[36px] font-black text-[#1a1a1a] leading-tight tracking-tight">
-          {data.title}
-        </h2>
-      </div>
-
-      {/* 2. LINGKARAN KUNING: Kategori / Nama Menu (Posisinya dinaikkan) */}
-      <div className="absolute top-[120px] left-10 z-20">
-        <p className="text-[14px] font-bold text-gray-500 mb-3 flex items-center gap-2">
-          Categories <span className="w-2.5 h-2.5 bg-green-500 rounded-full rounded-tr-none rotate-45 shadow-sm"></span>
-        </p>
-        <div className="flex gap-3">
-          <span className="bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full text-xs font-bold tracking-wide shadow-lg">
-            {data.namaMenu}
-          </span>
-        </div>
-      </div>
-
-      {/* 3. LINGKARAN HIJAU: Info Gizi / Komposisi di Sisi Kiri */}
-      {/* Lebar dibatasi (w-[180px]) agar tidak bertabrakan dengan gambar */}
-      <div className="absolute top-[220px] left-10 z-20 w-[180px]">
-        <ul className="flex flex-col gap-6">
-          {data.items.map((item, idx) => {
-            const splitItem = item.split('(');
-            const nama = splitItem[0].trim();
-            const porsi = splitItem[1] ? `${splitItem[1].replace(')', '')}` : '-'; 
-            
-            return (
-              <li key={idx} className="flex flex-col">
-                <span className="text-[#73706A] text-[12px] font-extrabold mb-1 tracking-widest uppercase">
-                  {porsi}
-                </span>
-                <span className="text-[#1a1a1a] text-[17px] font-black leading-tight">
-                  {nama}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-
-      {/* PERUBAHAN GAMBAR: 
-          - Digeser lebih jauh keluar batas kanan (-right-[90px]) 
-          - Lebar diatur menjadi w-[350px] agar tidak menimpa teks nama menu
-      */}
-      <div className="absolute top-[200px] -right-[90px] z-30 w-[350px]">
+      <div className="relative w-full h-[250px] mb-6 z-10 flex justify-center items-center flex-shrink-0 mt-2">
+        <div className="absolute top-0 -left-2 w-8 h-8 bg-green-500/80 rounded-br-full rounded-tl-full -rotate-45 blur-[1px]"></div>
+        <div className="absolute bottom-4 -right-2 w-6 h-6 bg-green-700/70 rounded-br-full rounded-tl-full rotate-45 blur-[1px]"></div>
+        <div className="absolute top-1/2 -right-4 w-4 h-4 bg-green-400/80 rounded-full blur-[1px]"></div>
+        
         <img 
           src={data.image} 
           alt={data.title} 
-          className="w-full h-auto object-contain rounded-3xl drop-shadow-[0_35px_40px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-[1.03]" 
+          className="w-full h-full object-contain rounded-[2rem] drop-shadow-xl mix-blend-multiply" 
         />
       </div>
 
-      {/* 4. Teks Peringatan (Posisinya dinaikkan ke bottom-12) */}
-      <div className="absolute bottom-12 w-full px-12 z-20">
-        <p className="text-center text-[14px] font-bold text-[#1a1a1a] leading-relaxed">
-          Segera dikonsumsi setelah pengantaran maksimal 2 jam
-        </p>
-      </div>
+      <div className="flex flex-col flex-grow">
+          
+          <div className="flex justify-between items-start gap-4 mb-4 z-20 min-h-[72px]">
+            {/* Judul diambil dinamis dari data */}
+            <h2 className="text-[26px] md:text-[28px] font-black text-[#1f1e1c] leading-tight tracking-tight">
+              {data.title}
+            </h2>
+            <div className="flex items-center gap-1.5 text-gray-700 bg-white/50 backdrop-blur-sm px-3.5 py-2 rounded-full shadow-sm border border-white/60 flex-shrink-0 whitespace-nowrap mt-1">
+              <Clock size={14} />
+              <span className="text-[12px] font-bold">Maks 2 Jam</span>
+            </div>
+          </div>
 
+          <div className="mb-5 z-20 min-h-[70px]">
+            <p className="text-[#59554d] text-[14px] font-semibold leading-relaxed">
+              {data.items.map(item => item.split('(')[0].trim()).join(', ')}. 
+              Sajian sehat bergizi seimbang khusus untuk porsi harian.
+            </p>
+          </div>
+
+          {/* Gizi diambil dinamis dari data */}
+          <div className="flex flex-wrap gap-3 mb-4 z-20">
+            <span className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl text-[14px] font-semibold text-[#334155] border border-white shadow-sm flex items-center gap-2">
+              🥩 Protein {data.protein}
+            </span>
+            <span className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl text-[14px] font-semibold text-[#334155] border border-white shadow-sm flex items-center gap-2">
+              🥑 Lemak {data.lemak}
+            </span>
+            <span className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl text-[14px] font-semibold text-[#334155] border border-white shadow-sm flex items-center gap-2">
+              🍚 Karbohidrat {data.karbohidrat}
+            </span>
+            <span className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl text-[14px] font-semibold text-[#334155] border border-white shadow-sm flex items-center gap-2">
+              🥦 Serat {data.serat}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-end mt-auto z-20 pt-5 border-t border-gray-300/30">
+             <div>
+                <p className="text-[13px] text-gray-500 font-bold mb-0.5">Total Energi</p>
+                <p className="text-[26px] font-black text-[#1f1e1c] tracking-tight leading-none">
+                  {/* Energi diambil dinamis dari data */}
+                  {data.energi} <span className="text-[16px] text-gray-600 font-bold">kkal</span>
+                </p>
+             </div>
+             
+             <div className="bg-[#111111] text-white px-7 py-3 rounded-[24px] font-bold flex items-center justify-center shadow-xl cursor-pointer hover:bg-black transition-colors">
+                <span className="text-[15px] tracking-wide">{namaPorsi}</span>
+             </div>
+          </div>
+
+      </div>
     </div>
   );
 }
